@@ -1,0 +1,5 @@
+= Rust Experiments
+Curt Brune <curt@brune.net>
+
+A collection of unrelated Rust experiments that share a top level
+Cargo.toml file.

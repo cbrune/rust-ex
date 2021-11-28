@@ -25,3 +25,9 @@ impl Service {
         ready_false.await
     }
 }
+
+impl Default for Service {
+    fn default() -> Self {
+        Self::new()
+    }
+}

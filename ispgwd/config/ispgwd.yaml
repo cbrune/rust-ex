@@ -1,0 +1,9 @@
+simulation: false
+poll_duration_ms: 2000
+isp_configs:
+  - name: ATT
+    interface: br0
+    priority: 20
+  - name: COMCAST
+    interface: br0
+    priority: 10

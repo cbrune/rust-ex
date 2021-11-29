@@ -1,15 +1,30 @@
 //! Future service experiment
 
 use std::thread;
+use std::time::Instant;
 
 use crate::net::*;
 use crate::prelude::*;
 
 #[derive(Debug, Clone)]
 struct IspState {
+    // ISP name
     name: String,
+
+    // Interface associated with ISP
     interface: NetworkInterface,
+
+    // IPv4 gateway ISP
+    gateway: Option<Gateway>,
+
+    // Priority of ISP, lower is more deseriable
     priority: u32,
+
+    // Instant when this ISP becamse the active gateway
+    became_active: Option<Instant>,
+
+    // Instant when this ISP went bad
+    became_bad: Option<Instant>,
 }
 
 #[derive(Debug, Clone)]
@@ -20,9 +35,22 @@ enum ServiceState {
 
 #[derive(Debug, Clone)]
 struct ServiceFsmState {
-    isps: Vec<IspState>,
-    default_gw: Option<Gateway>,
+    // FSM state
     state: ServiceState,
+
+    // Vector of ISP state
+    isps: Vec<IspState>,
+
+    // Current default gateway
+    default_gw: Option<Gateway>,
+
+    // Is the internet reachable via default gateway
+    gw_good: bool,
+
+    // Current active ISP.  Index into isps
+    active_isp: Option<usize>,
+
+    // count of iterations
     count: u32,
 }
 
@@ -43,9 +71,12 @@ impl Service {
         let mut isps = Vec::new();
         for isp in isp_configs {
             let isp_state = IspState {
-                name: isp.name,
+                name: isp.name.to_owned(),
                 interface: get_interface(&isp.interface)?,
                 priority: isp.priority,
+                gateway: get_isp_gateway(&isp.interface)?,
+                became_active: None,
+                became_bad: None,
             };
             isps.push(isp_state);
         }
@@ -57,9 +88,11 @@ impl Service {
             config,
             poll_duration,
             inner: ServiceFsmState {
+                state: ServiceState::Discovery,
                 isps,
                 default_gw,
-                state: ServiceState::Discovery,
+                gw_good: false,
+                active_isp: None,
                 count: 0,
             },
         })
@@ -67,7 +100,7 @@ impl Service {
 
     /// Start and run the service
     pub fn run(&mut self) -> Result<(), AppError> {
-        info!("Running a service: {:#?}", self);
+        debug!("Running a service: {:#?}", self);
 
         loop {
             let should_stop = self.handle_state()?;
@@ -86,12 +119,40 @@ impl Service {
 
         // get default gateway
         self.inner.default_gw = get_default_gw()?;
-        info!("Found gateway: {:#?}", self.inner.default_gw);
+        debug!("Found gateway: {:#?}", self.inner.default_gw);
 
         // update all the interface info
-        for isp in self.inner.isps.iter_mut() {
+        for (i, isp) in self.inner.isps.iter_mut().enumerate() {
             isp.interface = get_interface(&isp.interface.name)?;
+            isp.gateway = get_isp_gateway(&isp.interface.name)?;
+            if isp.gateway == self.inner.default_gw {
+                isp.became_active = Some(Instant::now());
+                self.inner.active_isp = Some(i);
+            }
         }
+
+        // check internet reachability
+        let mut good_host = 0;
+        let mut bad_host = 0;
+        // make this an odd number
+        let internet_hosts = [
+            "8.8.8.8", // google DNS
+            "1.1.1.1", // cloudflare DNS
+            "9.9.9.9", // quad9
+        ];
+        for host in internet_hosts {
+            match ping_addr(host)? {
+                true => good_host += 1,
+                false => bad_host += 1,
+            }
+        }
+
+        info!("good_host: {}, bad_host: {}", good_host, bad_host);
+        self.inner.gw_good = good_host > bad_host;
+        info!(
+            "good_host: {}, bad_host: {}, gw_good: {}",
+            good_host, bad_host, self.inner.gw_good
+        );
 
         self.inner.state = ServiceState::Monitor;
         Ok(false)

@@ -1,6 +1,7 @@
 //! Sample Error codes
 
 use std::io;
+use std::net;
 
 use thiserror::Error;
 
@@ -18,4 +19,8 @@ pub enum AppError {
     /// Std IO error
     #[error("I/O error")]
     IoError(#[from] io::Error),
+
+    /// Network address parsing error
+    #[error("Unable to parse network address")]
+    AddrParseError(#[from] net::AddrParseError),
 }

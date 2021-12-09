@@ -1,0 +1,8 @@
+[package]
+name = "tower-ex"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tower = { version = "0.4", features = ["timeout"] }
+tokio = { version = "1.14", features = ["rt", "sync", "time", "rt-multi-thread", "signal", "macros" ] }

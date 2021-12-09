@@ -8,6 +8,7 @@ use crate::prelude::*;
 
 #[derive(Debug, Clone)]
 struct IspState {
+    #[allow(dead_code)]
     // ISP name
     name: String,
 
@@ -17,12 +18,14 @@ struct IspState {
     // IPv4 gateway ISP
     gateway: Option<Gateway>,
 
+    #[allow(dead_code)]
     // Priority of ISP, lower is more deseriable
     priority: u32,
 
     // Instant when this ISP becamse the active gateway
     became_active: Option<Instant>,
 
+    #[allow(dead_code)]
     // Instant when this ISP went bad
     became_bad: Option<Instant>,
 }
@@ -57,8 +60,11 @@ struct ServiceFsmState {
 /// Service struct
 #[derive(Debug, Clone)]
 pub struct Service {
+    #[allow(dead_code)]
     config: IspgwdConfig,
+
     poll_duration: std::time::Duration,
+
     inner: ServiceFsmState,
 }
 

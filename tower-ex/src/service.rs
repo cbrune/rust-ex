@@ -8,7 +8,7 @@ use tower::Service;
 
 use crate::prelude::*;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct SampleService {
     count: usize,
 }

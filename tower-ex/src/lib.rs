@@ -15,4 +15,7 @@ pub mod prelude {
     pub use crate::error::AppError;
     pub use crate::request::SampleRequest;
     pub use crate::response::SampleResponse;
+    pub use crate::server::{Builder, Server};
+    pub use crate::service::SampleService;
+    pub use crate::transceiver::{SampleTransceiver, Transceiver};
 }

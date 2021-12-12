@@ -8,6 +8,6 @@ name = "sample"
 
 [dependencies]
 anyhow    = "1.0"
-tower     = { version = "0.4", features = ["timeout"] }
+tower     = { version = "0.4", features = ["timeout", "util"] }
 tokio     = { version = "1.14", features = ["rt", "sync", "time", "rt-multi-thread", "signal", "macros" ] }
 thiserror = "1.0"

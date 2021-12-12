@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let err = AppError::SampleError("for grins".to_owned());
         println!("Err: {:?}", err);
 
-        let mut svc = SampleService::new();
+        let svc = SampleService::new();
 
         let transceiver1 = SampleTransceiver::new(1, 3, 5);
         let transceiver2 = SampleTransceiver::new(100, 3, 5);
@@ -42,7 +42,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let server = Server::builder()
             .with_transceiver(transceiver1)
             .with_transceiver(transceiver2)
-            .serve_with_shutdown(svc, rx);
+            .serve_with_shutdown(svc, async move {
+                let _ = rx.await;
+            });
 
         // create a task to trigger shutdown in the future
         tokio::spawn(async move {

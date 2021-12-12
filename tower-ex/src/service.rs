@@ -9,11 +9,16 @@ use tower::Service;
 use crate::prelude::*;
 
 #[derive(Default, Debug)]
+/// A sample service
+///
+/// This simple service takes a SampleRequest, multiplies its value by
+/// 3, and returns a SampleResult.
 pub struct SampleService {
     count: usize,
 }
 
 impl SampleService {
+    /// Create a new sample service
     pub fn new() -> SampleService {
         SampleService::default()
     }
@@ -24,14 +29,14 @@ impl Service<SampleRequest> for SampleService {
     type Error = AppError;
     type Future = Pin<Box<dyn future::Future<Output = Result<Self::Response, Self::Error>>>>;
 
-    fn poll_ready(&mut self, cx: &mut std::task::Context<'_>) -> Poll<Result<(), Self::Error>> {
+    fn poll_ready(&mut self, _cx: &mut std::task::Context<'_>) -> Poll<Result<(), Self::Error>> {
         Poll::Ready(Ok(()))
     }
 
     fn call(&mut self, req: SampleRequest) -> Self::Future {
         // create the response inside a future
         let future = async move {
-            let response = SampleResponse::new(req.val() * 3);
+            let response = SampleResponse::new(req.value() * 3);
             response
         };
 

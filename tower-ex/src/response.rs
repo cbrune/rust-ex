@@ -3,14 +3,20 @@
 use crate::prelude::*;
 
 #[derive(Debug)]
-pub struct SampleResponse(usize);
+/// A sample response object
+pub struct SampleResponse {
+    /// The valueo of the response object
+    value: usize,
+}
 
 impl SampleResponse {
-    pub fn new(val: usize) -> Result<SampleResponse, AppError> {
-        Ok(SampleResponse(val))
+    /// Create new response object
+    pub fn new(value: usize) -> Result<SampleResponse, AppError> {
+        Ok(SampleResponse { value })
     }
 
-    pub fn val(&self) -> usize {
-        self.0
+    /// Return the value of a response object
+    pub fn value(&self) -> usize {
+        self.value
     }
 }

@@ -1,14 +1,20 @@
 //! Sample Request
 
 #[derive(Debug)]
-pub struct SampleRequest(usize);
+/// A Sample Request Object
+pub struct SampleRequest {
+    /// The value within the request
+    value: usize,
+}
 
 impl SampleRequest {
-    pub fn new(val: usize) -> SampleRequest {
-        SampleRequest(val)
+    /// Create a new sample request
+    pub fn new(value: usize) -> SampleRequest {
+        SampleRequest { value }
     }
 
-    pub fn val(&self) -> usize {
-        self.0
+    /// Return the value of the request
+    pub fn value(&self) -> usize {
+        self.value
     }
 }

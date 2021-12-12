@@ -2,27 +2,32 @@
 
 // server is a  future
 
-use std::fmt;
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
-use tokio::sync::oneshot::Receiver;
-
 use crate::prelude::*;
 
+/// A sample server object
 pub struct Server<S, T> {
+    /// Service handlers for the server
     service: S,
+
+    /// Transeivers for the server
     transceivers: Vec<T>,
-    signal: Pin<Box<Receiver<()>>>,
+
+    /// Future used to shutdown the server
+    signal: Pin<Box<dyn Future<Output = ()> + 'static>>,
 }
 
 #[derive(Debug)]
+/// A builder for constructing servers
 pub struct Builder<T> {
     transceivers: Vec<T>,
 }
 
 impl<T> Server<(), T> {
+    /// Creates a new builder
     pub fn builder() -> Builder<T> {
         Builder {
             transceivers: Vec::new(),
@@ -30,6 +35,8 @@ impl<T> Server<(), T> {
     }
 }
 
+// Needed to take the Pin::as_mut() of self.signal
+// see: https://users.rust-lang.org/t/take-in-impl-future-cannot-borrow-data-in-a-dereference-of-pin/52042
 impl<S, T> Unpin for Server<S, T> {}
 
 impl<S, T> Future for Server<S, T> {
@@ -56,12 +63,17 @@ impl<S, T> Future for Server<S, T> {
 }
 
 impl<T> Builder<T> {
+    /// Add a transceiver to the server
     pub fn with_transceiver(mut self, transceiver: T) -> Builder<T> {
         self.transceivers.push(transceiver);
         self
     }
 
-    pub fn serve_with_shutdown<S>(self, service: S, signal: Receiver<()>) -> Server<S, T> {
+    /// Start the server and include a shutdown signal
+    pub fn serve_with_shutdown<S, F>(self, service: S, signal: F) -> Server<S, T>
+    where
+        F: Future<Output = ()> + 'static,
+    {
         Server {
             service,
             transceivers: self.transceivers,

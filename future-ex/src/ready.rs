@@ -45,14 +45,18 @@ impl Future for Ready {
             *waker = Some(context.waker().clone());
             // start the polling thread ...
             let thread_waker = context.waker().clone();
+            let thread_waker2 = context.waker().clone();
             let thread_ready = self.poll_ready.clone();
             thread::spawn(move || {
                 info!("Ready thread starting");
                 let count = AtomicUsize::new(0);
+
+                // bogus wake to trigger a poll event
+                thread_waker.wake();
                 while count.fetch_add(1, Ordering::Relaxed) < 100000000 {}
                 info!("Ready thread complete, waking");
                 thread_ready.store(true, Ordering::Relaxed);
-                thread_waker.wake();
+                thread_waker2.wake();
             });
             Poll::Pending
         } else {

@@ -11,10 +11,13 @@ use crate::prelude::*;
 /// A sample server object
 pub struct Server<S, T> {
     /// Service handlers for the server
-    service: S,
+    _service: S,
 
     /// Transeivers for the server
-    transceivers: Vec<T>,
+    _transceivers: Vec<T>,
+
+    /// Next transceiver
+    _next_transceriver: usize,
 
     /// Future used to shutdown the server
     signal: Pin<Box<dyn Future<Output = ()> + 'static>>,
@@ -54,7 +57,9 @@ impl<S, T> Future for Server<S, T> {
                     return Poll::Ready(Ok(()));
                 }
                 Poll::Pending => {
-                    println!("poll: Returning Pending");
+                    println!("shutdown: Returning Pending");
+                    // check transceivers
+
                     return Poll::Pending;
                 }
             }
@@ -70,14 +75,21 @@ impl<T> Builder<T> {
     }
 
     /// Start the server and include a shutdown signal
-    pub fn serve_with_shutdown<S, F>(self, service: S, signal: F) -> Server<S, T>
+    pub fn serve_with_shutdown<S, F>(self, service: S, signal: F) -> Result<Server<S, T>, AppError>
     where
         F: Future<Output = ()> + 'static,
     {
-        Server {
-            service,
-            transceivers: self.transceivers,
-            signal: Box::pin(signal),
+        if self.transceivers.len() < 1 {
+            return Err(AppError::ServerConfig(
+                "Trying to start server with no transceivers".to_owned(),
+            ));
         }
+
+        Ok(Server {
+            _service: service,
+            _transceivers: self.transceivers,
+            _next_transceriver: 0,
+            signal: Box::pin(signal),
+        })
     }
 }

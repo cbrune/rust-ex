@@ -5,7 +5,7 @@ use crate::prelude::*;
 #[derive(Debug)]
 /// A sample response object
 pub struct SampleResponse {
-    /// The valueo of the response object
+    /// The value of the response object
     value: usize,
 }
 

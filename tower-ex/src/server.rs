@@ -47,21 +47,20 @@ impl<S, T> Future for Server<S, T> {
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         println!("Starting server poll loop....");
-        loop {
-            // any transceivers have work?
-            // received shutdown signal?
-            let signal = Pin::as_mut(&mut self.signal);
-            match signal.poll(cx) {
-                Poll::Ready(_result) => {
-                    println!("Received shutdown signal");
-                    return Poll::Ready(Ok(()));
-                }
-                Poll::Pending => {
-                    println!("shutdown: Returning Pending");
-                    // check transceivers
 
-                    return Poll::Pending;
-                }
+        // any transceivers have work?
+        // received shutdown signal?
+        let signal = Pin::as_mut(&mut self.signal);
+        match signal.poll(cx) {
+            Poll::Ready(_result) => {
+                println!("Received shutdown signal");
+                Poll::Ready(Ok(()))
+            }
+            Poll::Pending => {
+                println!("shutdown: Returning Pending");
+                // check transceivers
+
+                Poll::Pending
             }
         }
     }
@@ -79,7 +78,7 @@ impl<T> Builder<T> {
     where
         F: Future<Output = ()> + 'static,
     {
-        if self.transceivers.len() < 1 {
+        if self.transceivers.is_empty() {
             return Err(AppError::ServerConfig(
                 "Trying to start server with no transceivers".to_owned(),
             ));

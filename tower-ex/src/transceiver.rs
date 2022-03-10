@@ -93,7 +93,7 @@ impl Stream for SampleTransceiver {
         }
 
         if let Some(sender) = &self.waker_sender {
-            if let Err(_) = sender.blocking_send(cx.waker().clone()) {
+            if sender.blocking_send(cx.waker().clone()).is_err() {
                 println!("Error: receiver dropped");
                 return Poll::Ready(None);
             }

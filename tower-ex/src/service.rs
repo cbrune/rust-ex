@@ -24,10 +24,12 @@ impl SampleService {
     }
 }
 
+type SampleRequestFuture = dyn future::Future<Output = Result<SampleResponse, AppError>>;
+
 impl Service<SampleRequest> for SampleService {
     type Response = SampleResponse;
     type Error = AppError;
-    type Future = Pin<Box<dyn future::Future<Output = Result<Self::Response, Self::Error>>>>;
+    type Future = Pin<Box<SampleRequestFuture>>;
 
     fn poll_ready(&mut self, _cx: &mut std::task::Context<'_>) -> Poll<Result<(), Self::Error>> {
         Poll::Ready(Ok(()))
@@ -35,10 +37,7 @@ impl Service<SampleRequest> for SampleService {
 
     fn call(&mut self, req: SampleRequest) -> Self::Future {
         // create the response inside a future
-        let future = async move {
-            let response = SampleResponse::new(req.value() * 3);
-            response
-        };
+        let future = async move { SampleResponse::new(req.value() * 3) };
 
         // increment our processing count
         self.count += 1;

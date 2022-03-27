@@ -11,7 +11,7 @@ use std::path::Path;
 
 use anyhow::{anyhow, Context};
 use bit_set::BitSet;
-use tracing::{debug, info};
+use tracing::debug;
 
 use crate::element::{Element, GROUP_SIZE};
 use crate::prelude::SudokuError;
@@ -473,7 +473,7 @@ impl Puzzle {
 
                 if let Some(val) = self.diff_other_group(r, c, other_elements) {
                     // found one.  finalize this value.
-                    info!("row_scan: found one, row: {}, col: {}, val: {}", r, c, val);
+                    debug!("row_scan: found one, row: {}, col: {}, val: {}", r, c, val);
                     self.finalize_element(r, c, val)?;
                     updates += 1;
                 }
@@ -517,7 +517,7 @@ impl Puzzle {
 
                 if let Some(val) = self.diff_other_group(r, c, other_elements) {
                     // found one.  finalize this value.
-                    info!("col_scan: found one, row: {}, col: {}, val: {}", r, c, val);
+                    debug!("col_scan: found one, row: {}, col: {}, val: {}", r, c, val);
                     self.finalize_element(r, c, val)?;
                     updates += 1;
                 }
@@ -565,7 +565,7 @@ impl Puzzle {
 
                 if let Some(val) = self.diff_other_group(r, c, other_elements) {
                     // found one.  finalize this value.
-                    info!("sqr_scan: found one, row: {}, col: {}, val: {}", r, c, val);
+                    debug!("sqr_scan: found one, row: {}, col: {}, val: {}", r, c, val);
                     self.finalize_element(r, c, val)?;
                     updates += 1;
                 }
@@ -608,7 +608,7 @@ impl Puzzle {
         // - solved
         // - unsolved
         // - unsolvable
-        info!("Starting to solve puzzle");
+        debug!("Starting logic solver");
 
         let result;
         loop {

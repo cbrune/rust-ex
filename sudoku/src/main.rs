@@ -8,7 +8,7 @@ use tracing_subscriber::EnvFilter;
 
 use sudoku::prelude::*;
 
-/// Simple program to greet a person
+/// Sudoku Puzzle Solver
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {

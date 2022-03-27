@@ -1,0 +1,40 @@
+= Sudoku Puzzle Solver
+Curt Brune <curt@brune.net>
+
+This sudoku puzzle solver first tries a simple logic approach.  If
+that fails, then the solver and then shifts to a brute force guessing
+approach.
+
+The `puzzles` directory contains a few sample puzzles.
+
+You can run the solver like this:
+```
+photon:~/src/rust-ex$ cargo run --package sudoku -- -p sudoku/puzzles/x2.txt
+    Finished dev [unoptimized + debuginfo] target(s) in 0.03s
+     Running `target/debug/sudoku -p sudoku/puzzles/x2.txt`
+ INFO sudoku: Using puzzle:
+2 X X   X X 8   X 1 X
+5 X 6   X X X   X X X
+X X X   X 4 X   3 7 X
+
+X X 5   X X 3   X X 8
+8 2 X   X X X   X 6 3
+4 X X   1 X X   5 X X
+
+X 8 4   X 1 X   X X X
+X X X   X X X   6 X 9
+X 6 X   5 X X   X X 1
+
+ INFO sudoku: Solved puzzle iterations: 17
+2 4 7   3 6 8   9 1 5
+5 3 6   7 9 1   2 8 4
+9 1 8   2 4 5   3 7 6
+
+6 7 5   4 2 3   1 9 8
+8 2 1   9 5 7   4 6 3
+4 9 3   1 8 6   5 2 7
+
+3 8 4   6 1 9   7 5 2
+1 5 2   8 7 4   6 3 9
+7 6 9   5 3 2   8 4 1
+```

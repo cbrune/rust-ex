@@ -36,10 +36,11 @@ fn main() -> Result<(), anyhow::Error> {
             info!("Solved puzzle iterations: {}\n{}", iters, puzzle);
             Ok(())
         }
-        Err(e) => {
+        Err((e, iter)) => {
             error!("Failed to solve puzzle: {:?}\n{}", e, puzzle);
             error!("Error puzzle state:\n{:?}", puzzle);
-            Err(e)
+            error!("Total iterations: {}", iter);
+            Err(e.into())
         }
     }
 }

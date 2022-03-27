@@ -14,28 +14,20 @@ use bit_set::BitSet;
 use tracing::{debug, info};
 
 use crate::element::{Element, GROUP_SIZE};
+use crate::prelude::SudokuError;
 
 const NUM_ELEMENTS: usize = GROUP_SIZE * GROUP_SIZE;
-
-#[derive(Debug, Clone)]
-enum PuzzleState {
-    Solved,
-    Unsolved,
-    Unsolvable,
-}
 
 /// Represents a sudoku puzzle
 #[derive(Clone)]
 pub struct Puzzle {
     elements: [RefCell<Element>; NUM_ELEMENTS],
-    state: PuzzleState,
 }
 
 impl Default for Puzzle {
     fn default() -> Self {
         Self {
             elements: [(); NUM_ELEMENTS].map(|_| RefCell::new(Element::default())),
-            state: PuzzleState::Unsolved,
         }
     }
 }
@@ -254,7 +246,7 @@ impl Puzzle {
                             col + 1
                         )));
                     }
-                    puzzle.finalize_element(row, col, val - 1);
+                    puzzle.finalize_element(row, col, val - 1)?;
                 }
             }
             row += 1;
@@ -295,13 +287,55 @@ impl Puzzle {
         }
     }
 
-    fn finalize_element(&mut self, row: usize, col: usize, val: usize) {
+    fn check_inconsistent(&self, row: usize, col: usize, val: usize) -> Result<(), SudokuError> {
+        // is this value already finalized in this row?
+        for c in 0..GROUP_SIZE {
+            if c != col {
+                if let Some(resolved) = self.element(row, c).borrow().resolved() {
+                    if resolved == val {
+                        return Err(SudokuError::PuzzleStateInconsistent(row, col, val));
+                    }
+                }
+            }
+        }
+
+        // is this value already finalized in this col?
+        for r in 0..GROUP_SIZE {
+            if r != row {
+                if let Some(resolved) = self.element(r, col).borrow().resolved() {
+                    if resolved == val {
+                        return Err(SudokuError::PuzzleStateInconsistent(row, col, val));
+                    }
+                }
+            }
+        }
+
+        // is this value already finalized in this square?
+        let sqr = map_row_col_to_sqr(row, col);
+        for (r, c) in map_sqr_to_row_col(sqr) {
+            if (r != row) && (c != col) {
+                if let Some(resolved) = self.element(r, c).borrow().resolved() {
+                    if resolved == val {
+                        return Err(SudokuError::PuzzleStateInconsistent(row, col, val));
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn finalize_element(&mut self, row: usize, col: usize, val: usize) -> Result<(), SudokuError> {
+        self.check_inconsistent(row, col, val)?;
+
         self.element_as_mut(row, col).finalize(val);
 
         // remove val as possible from other row, cel, square groups
         self.row_remove_possible(row, col, val);
         self.col_remove_possible(row, col, val);
         self.sqr_remove_possible(row, col, val);
+
+        Ok(())
     }
 
     fn element(&self, row: usize, col: usize) -> Ref<'_, Element> {
@@ -313,7 +347,6 @@ impl Puzzle {
     }
 
     fn printer(&self, f: &mut std::fmt::Formatter<'_>, debug: bool) -> std::fmt::Result {
-        writeln!(f, "Puzzle state: {:?}", self.state)?;
         for i in 0..GROUP_SIZE {
             for j in 0..GROUP_SIZE {
                 if debug {
@@ -337,7 +370,7 @@ impl Puzzle {
         !self.elements.iter().any(|e| !e.borrow().is_finalized())
     }
 
-    fn reduce_basic_elements(&mut self) -> usize {
+    fn reduce_basic_elements(&mut self) -> Result<usize, SudokuError> {
         let mut updates = 0;
 
         // This is the most basic reduction. Finding elements that are
@@ -353,7 +386,7 @@ impl Puzzle {
                     if let Some(v) = element.ready() {
                         drop(element);
                         debug!("reduce_basic: row: {}, col: {}, must be: {}", r, c, v + 1);
-                        self.finalize_element(r, c, v);
+                        self.finalize_element(r, c, v)?;
                         updates += 1;
                     }
                 }
@@ -365,7 +398,7 @@ impl Puzzle {
             }
         }
 
-        updates
+        Ok(updates)
     }
 
     fn row_minus(&self, row: usize, minus_set: &BitSet) -> Vec<RefMut<'_, Element>> {
@@ -420,7 +453,7 @@ impl Puzzle {
         }
     }
 
-    fn row_scan(&mut self) -> usize {
+    fn row_scan(&mut self) -> Result<usize, SudokuError> {
         let mut updates = 0;
 
         // for each row
@@ -441,13 +474,13 @@ impl Puzzle {
                 if let Some(val) = self.diff_other_group(r, c, other_elements) {
                     // found one.  finalize this value.
                     info!("row_scan: found one, row: {}, col: {}, val: {}", r, c, val);
-                    self.finalize_element(r, c, val);
+                    self.finalize_element(r, c, val)?;
                     updates += 1;
                 }
             }
         }
 
-        updates
+        Ok(updates)
     }
 
     fn col_minus(&self, col: usize, minus_set: &BitSet) -> Vec<RefMut<'_, Element>> {
@@ -463,7 +496,7 @@ impl Puzzle {
         group
     }
 
-    fn col_scan(&mut self) -> usize {
+    fn col_scan(&mut self) -> Result<usize, SudokuError> {
         let mut updates = 0;
 
         // for each col
@@ -485,13 +518,13 @@ impl Puzzle {
                 if let Some(val) = self.diff_other_group(r, c, other_elements) {
                     // found one.  finalize this value.
                     info!("col_scan: found one, row: {}, col: {}, val: {}", r, c, val);
-                    self.finalize_element(r, c, val);
+                    self.finalize_element(r, c, val)?;
                     updates += 1;
                 }
             }
         }
 
-        updates
+        Ok(updates)
     }
 
     fn sqr_minus(&self, row: usize, col: usize, minus_set: &BitSet) -> Vec<RefMut<'_, Element>> {
@@ -513,7 +546,7 @@ impl Puzzle {
         group
     }
 
-    fn sqr_scan(&mut self) -> usize {
+    fn sqr_scan(&mut self) -> Result<usize, SudokuError> {
         let mut updates = 0;
 
         // loop over squares
@@ -533,68 +566,106 @@ impl Puzzle {
                 if let Some(val) = self.diff_other_group(r, c, other_elements) {
                     // found one.  finalize this value.
                     info!("sqr_scan: found one, row: {}, col: {}, val: {}", r, c, val);
-                    self.finalize_element(r, c, val);
+                    self.finalize_element(r, c, val)?;
                     updates += 1;
                 }
             }
         }
 
-        updates
+        Ok(updates)
     }
 
-    fn reduce(&mut self) {
+    fn reduce(&mut self) -> Result<(), SudokuError> {
         debug!("Before reduce_basic_elements(): {:?}", &self);
-        let mut updates = self.reduce_basic_elements();
+        let mut updates = self.reduce_basic_elements()?;
 
         debug!("Before row_scan(): updates: {}, {:?}", updates, &self);
-        updates += self.row_scan();
+        updates += self.row_scan()?;
+
         debug!("Before col_scan(): updates: {}, {:?}", updates, &self);
-        updates += self.col_scan();
+        updates += self.col_scan()?;
+
         debug!("Before sqr_scan(): updates: {}, {:?}", updates, &self);
-        updates += self.sqr_scan();
+        updates += self.sqr_scan()?;
 
-        // TODO: medium hidden pairs scan
-
-        if updates == 0 {
+        if self.is_complete() {
             // Time to stop
-            self.state = PuzzleState::Unsolvable;
-        } else if self.is_complete() {
+            Ok(())
+        } else if updates == 0 {
             // Time to stop
-            self.state = PuzzleState::Solved;
+            Err(SudokuError::PuzzleUnsolvable)
         } else {
             // Keep going
-            self.state = PuzzleState::Unsolved;
+            Err(SudokuError::PuzzleUnsolved)
         }
     }
 
-    /// Attempt to solve the puzzle
-    pub fn solve(&mut self) -> Result<usize, anyhow::Error> {
-        let mut i = 0;
+    fn logic_solve(&mut self) -> Result<usize, (SudokuError, usize)> {
+        let mut iters = 0;
+
         // loop while !puzzle.solved()
         // states:
         // - solved
         // - unsolved
         // - unsolvable
         info!("Starting to solve puzzle");
+
+        let result;
         loop {
-            debug!("Iter: {}\n{}", i, &self);
+            debug!("Iter: {}\n{}", iters, &self);
 
-            match self.state {
-                PuzzleState::Unsolved => self.reduce(),
-                PuzzleState::Solved => break,
-                PuzzleState::Unsolvable => break,
+            match self.reduce() {
+                Ok(()) => {
+                    result = Ok(iters);
+                    break;
+                }
+                Err(SudokuError::PuzzleUnsolved) => iters += 1,
+                Err(e) => {
+                    result = Err((e, iters));
+                    break;
+                }
             }
-
-            i += 1;
         }
 
-        match self.state {
-            PuzzleState::Solved => Ok(i),
-            _ => Err(anyhow!(format!(
-                "Puzzle failed: {:?}, iterations: {}",
-                self.state, i
-            ))),
+        result
+    }
+
+    /// Attempt to solve the puzzle
+    pub fn solve(&mut self) -> Result<usize, (SudokuError, usize)> {
+        let mut iterations = match self.logic_solve() {
+            Ok(iter) => return Ok(iter),
+            Err((_, iter)) => iter,
+        };
+
+        // Time to guess
+        // Loop through the puzzle, finalize a possible value and try to solve the puzzle
+        for r in 0..GROUP_SIZE {
+            for c in 0..GROUP_SIZE {
+                if self.element(r, c).borrow().is_finalized() {
+                    continue;
+                }
+                let bitvec = self.element(r, c).borrow().possible().clone();
+                for v in bitvec.into_iter() {
+                    let mut puzzle = self.clone();
+                    if puzzle.finalize_element(r, c, v).is_err() {
+                        continue;
+                    }
+                    match puzzle.logic_solve() {
+                        Ok(iter) => {
+                            // the guess worked
+                            *self = puzzle;
+                            return Ok(iterations + iter);
+                        }
+                        Err((_e, iter)) => {
+                            // guess failed. or maybe need to guess more
+                            iterations += iter;
+                        }
+                    }
+                }
+            }
         }
+
+        Err((SudokuError::PuzzleUnsolvable, iterations))
     }
 }
 

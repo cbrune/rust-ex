@@ -21,6 +21,11 @@ impl Element {
         self.possible.insert(val);
     }
 
+    /// Returned resolved value
+    pub fn resolved(&self) -> Option<usize> {
+        self.resolved
+    }
+
     /// Test if element is finalized
     pub fn is_finalized(&self) -> bool {
         self.resolved.is_some()

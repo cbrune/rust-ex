@@ -10,5 +10,6 @@ name = "sudoku"
 anyhow             = "1.0"
 bit-set            = "0.5"
 clap               = { version = "3.1", features = ["derive"] }
+thiserror          = "1.0"
 tracing            = "0.1"
 tracing-subscriber = "0.2"

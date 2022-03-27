@@ -797,6 +797,7 @@ dependencies = [
  "anyhow",
  "bit-set",
  "clap 3.1.6",
+ "thiserror",
  "tracing",
  "tracing-subscriber",
 ]

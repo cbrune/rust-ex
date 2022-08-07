@@ -1,0 +1,30 @@
+name: Run cargo command in Ubuntu build environment
+
+on:
+  workflow_call:
+    inputs:
+      command:
+        required: true
+        type: string
+      args:
+        required: false
+        type: string
+
+jobs:
+  run_cargo:
+    name: Run cargo command
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          sudo apt-get -y install libasound2-dev
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add clippy
+      - uses: actions-rs/cargo@v1
+        with:
+          command: ${{ inputs.command }}
+          args: ${{ inputs.args }}

@@ -3,51 +3,27 @@ on: [push, pull_request]
 name: Continuous integration
 
 jobs:
-  check:
-    name: Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+  cargo-check:
+    uses: ./.github/workflows/run-cargo.yml
+    with:
+      command: check
 
-      - run: |
-          sudo apt-get -y install libasound2-dev
+  cargo-test:
+    uses: ./.github/workflows/run-cargo.yml
+    with:
+      command: test
 
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-
-  test:
-    name: Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - run: |
-          sudo apt-get -y install libasound2-dev
-
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
+  cargo-clippy:
+    uses: ./.github/workflows/run-cargo.yml
+    with:
+      command: clippy
+      args: -- -D warnings
 
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - run: |
-          sudo apt-get -y install libasound2-dev
-
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -58,24 +34,3 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - run: |
-          sudo apt-get -y install libasound2-dev
-
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - run: rustup component add clippy
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
-

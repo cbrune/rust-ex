@@ -2,6 +2,7 @@
 members = [
   "future-ex",
   "ispgwd",
+  "pcm-play",
   "sudoku",
   "tower-ex",
 ]

@@ -71,8 +71,8 @@ fn main() -> Result<(), anyhow::Error> {
     for i in 0..buf_sz {
         let mut val: f32 =
             (i as f32 * std::f32::consts::TAU / ((SAMPLE_RATE as f32) / args.frequency)).sin();
-        val = val * args.amplitude;
-        val = val * std::i16::MAX as f32;
+        val *= args.amplitude;
+        val *= std::i16::MAX as f32;
         buf.push(val as i16);
     }
 

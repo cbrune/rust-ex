@@ -5,6 +5,7 @@ members = [
   "ispgwd",
   "pcm-play",
   "sudoku",
+  "stack-ex",
   "tower-ex",
 ]
 

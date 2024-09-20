@@ -1,8 +1,11 @@
 [workspace]
 members = [
+  "dyn-ex",
   "future-ex",
   "ispgwd",
   "pcm-play",
   "sudoku",
   "tower-ex",
 ]
+
+resolver = "2"

@@ -27,7 +27,7 @@ const SAMPLE_RATE: u32 = 44100;
 
 fn pcm_open_default() -> Result<PCM, anyhow::Error> {
     let pcm = PCM::open(
-        &*CString::new("default").unwrap(),
+        &CString::new("default").unwrap(),
         Direction::Playback,
         false,
     )
@@ -72,7 +72,7 @@ fn main() -> Result<(), anyhow::Error> {
         let mut val: f32 =
             (i as f32 * std::f32::consts::TAU / ((SAMPLE_RATE as f32) / args.frequency)).sin();
         val *= args.amplitude;
-        val *= std::i16::MAX as f32;
+        val *= i16::MAX as f32;
         buf.push(val as i16);
     }
 
@@ -80,7 +80,7 @@ fn main() -> Result<(), anyhow::Error> {
     let io = pcm.io_i16()?;
     for _ in 0..(args.duration * ((SAMPLE_RATE as usize / buf_sz) as f32)) as usize {
         let samples_out = io.writei(&buf[..])?;
-        if samples_out != buf_sz as usize {
+        if samples_out != buf_sz {
             return Err(anyhow::anyhow!(
                 "Output samples {} not equal to buffer size {}",
                 samples_out,

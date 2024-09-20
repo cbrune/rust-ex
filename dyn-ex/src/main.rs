@@ -72,7 +72,7 @@ impl ColorEnum {
 }
 
 fn main() {
-    let mut color_vec = vec![
+    let mut color_vec = [
         ColorEnum::Red(Red::default()),
         ColorEnum::Green(Green::default()),
         ColorEnum::Blue(Blue::default()),

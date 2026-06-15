@@ -874,4 +874,164 @@ mod tests {
         let mut puzzle = parse_data(input5).unwrap();
         assert!(puzzle.solve().is_ok());
     }
+
+    #[test]
+    fn test_map_row_col_to_sqr() {
+        // Test mapping of (row, col) to square number
+        // Square layout:
+        // 0 1 2
+        // 3 4 5
+        // 6 7 8
+
+        // Square 0 (top-left)
+        assert_eq!(map_row_col_to_sqr(0, 0), 0);
+        assert_eq!(map_row_col_to_sqr(0, 2), 0);
+        assert_eq!(map_row_col_to_sqr(2, 0), 0);
+        assert_eq!(map_row_col_to_sqr(2, 2), 0);
+
+        // Square 4 (center)
+        assert_eq!(map_row_col_to_sqr(3, 3), 4);
+        assert_eq!(map_row_col_to_sqr(4, 4), 4);
+        assert_eq!(map_row_col_to_sqr(5, 5), 4);
+
+        // Square 8 (bottom-right)
+        assert_eq!(map_row_col_to_sqr(6, 6), 8);
+        assert_eq!(map_row_col_to_sqr(8, 8), 8);
+
+        // Other corners
+        assert_eq!(map_row_col_to_sqr(0, 8), 2); // top-right
+        assert_eq!(map_row_col_to_sqr(8, 0), 6); // bottom-left
+    }
+
+    #[test]
+    fn test_is_complete() {
+        // Test with incomplete puzzle (default state)
+        let puzzle = Puzzle::default();
+        assert!(!puzzle.is_complete());
+
+        // Test with a simple complete puzzle
+        let complete_puzzle = vec![
+            "1 2 3 4 5 6 7 8 9",
+            "4 5 6 7 8 9 1 2 3",
+            "7 8 9 1 2 3 4 5 6",
+            "",
+            "2 3 4 5 6 7 8 9 1",
+            "5 6 7 8 9 1 2 3 4",
+            "8 9 1 2 3 4 5 6 7",
+            "",
+            "3 4 5 6 7 8 9 1 2",
+            "6 7 8 9 1 2 3 4 5",
+            "9 1 2 3 4 5 6 7 8",
+        ];
+        let puzzle = parse_data(complete_puzzle).unwrap();
+        assert!(puzzle.is_complete());
+    }
+
+    #[test]
+    fn test_inconsistent_puzzle() {
+        // Test puzzle with duplicate in same row
+        let duplicate_row = vec![
+            "1 2 3 4 5 6 7 8 1", // duplicate 1 in same row
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+            "",
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+            "",
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+        ];
+        let result = parse_data(duplicate_row);
+        assert!(result.is_err());
+
+        // Test puzzle with duplicate in same column
+        let duplicate_col = vec![
+            "1 X X X X X X X X",
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+            "",
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+            "",
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+            "1 X X X X X X X X", // duplicate 1 in same column
+        ];
+        let result = parse_data(duplicate_col);
+        assert!(result.is_err());
+
+        // Test puzzle with duplicate in same square
+        let duplicate_sqr = vec![
+            "1 X X X X X X X X",
+            "X 1 X X X X X X X", // duplicate 1 in same square
+            "X X X X X X X X X",
+            "",
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+            "",
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+            "X X X X X X X X X",
+        ];
+        let result = parse_data(duplicate_sqr);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_display_format() {
+        // Test that Display trait works without panicking
+        let puzzle_input = vec![
+            "8 7 X 1 X X X X X",
+            "X X 2 X X X 1 X 4",
+            "X X X X 5 9 7 8 X",
+            "",
+            "3 X X 4 X 6 X X X",
+            "X X 7 X X X 9 X X",
+            "X X X 8 X 3 X X 6",
+            "",
+            "X 4 5 9 X X X X X",
+            "2 X 3 X X X 4 X X",
+            "X X X X X 7 X 5 9",
+        ];
+        let puzzle = parse_data(puzzle_input).unwrap();
+        let display_str = format!("{}", puzzle);
+        assert!(!display_str.is_empty());
+
+        // Test Debug format as well
+        let debug_str = format!("{:?}", puzzle);
+        assert!(!debug_str.is_empty());
+    }
+
+    #[test]
+    fn test_map_sqr_to_row_col() {
+        // Test square 0 (top-left)
+        let coords = map_sqr_to_row_col(0);
+        assert_eq!(coords[0], (0, 0));
+        assert_eq!(coords[1], (0, 1));
+        assert_eq!(coords[2], (0, 2));
+        assert_eq!(coords[3], (1, 0));
+        assert_eq!(coords[8], (2, 2));
+
+        // Test square 4 (center)
+        let coords = map_sqr_to_row_col(4);
+        assert_eq!(coords[0], (3, 3));
+        assert_eq!(coords[4], (4, 4));
+        assert_eq!(coords[8], (5, 5));
+
+        // Test square 8 (bottom-right)
+        let coords = map_sqr_to_row_col(8);
+        assert_eq!(coords[0], (6, 6));
+        assert_eq!(coords[8], (8, 8));
+    }
+
+    #[test]
+    fn test_parse_empty_input() {
+        let empty = vec![];
+        let result = parse_data(empty);
+        assert!(result.is_err());
+    }
 }

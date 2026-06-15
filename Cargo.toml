@@ -6,7 +6,7 @@ members = [
   "pcm-play",
   "sudoku",
   "stack-ex",
-  "tower-ex", "data",
+  "tower-ex",
 ]
 
 resolver = "2"

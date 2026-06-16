@@ -72,7 +72,7 @@ impl Service {
     /// Create a new service
     pub fn new(config: IspgwdConfig) -> Result<Service, AppError> {
         let mut isp_configs = config.isp_configs.clone();
-        isp_configs.sort_by(|a, b| a.priority.cmp(&b.priority));
+        isp_configs.sort_by_key(|a| a.priority);
 
         let mut isps = Vec::new();
         for isp in isp_configs {
